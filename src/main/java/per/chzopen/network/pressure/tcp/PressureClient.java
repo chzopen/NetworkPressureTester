@@ -187,16 +187,27 @@ public class PressureClient
 		{
 			public void completed(Integer length, Object attachment)
 			{
-				try
+				if( length<0 )
 				{
-					readBuffer.clear();
-					client.read(readBuffer, null, this);
-				}
-				catch (Exception e)
-				{
-					logger.error("read data fail: ", e);
+					logger.error("received {} bytes", length);
+					_closeChannel(client);
 					// 过1秒重连
 					scheduledService.schedule(connectRunnable, 1, TimeUnit.SECONDS);
+					return ;
+				}
+				else
+				{
+					try
+					{
+						readBuffer.clear();
+						client.read(readBuffer, null, this);
+					}
+					catch (Exception e)
+					{
+						logger.error("read data fail: ", e);
+						// 过1秒重连
+						scheduledService.schedule(connectRunnable, 1, TimeUnit.SECONDS);
+					}
 				}
 			}
 
@@ -209,6 +220,7 @@ public class PressureClient
 					sendDataFuture.cancel(false);
 					sendDataFuture = null;
 				}
+				_closeChannel(client);
 				// 过1秒重连
 				scheduledService.schedule(connectRunnable, 1, TimeUnit.SECONDS);
 			}
@@ -254,7 +266,6 @@ public class PressureClient
 				public void failed(Throwable e, ByteBuffer[] attachment)
 				{
 					logger.error("", e);
-					_closeChannel(client);
 				}
 			});
 			

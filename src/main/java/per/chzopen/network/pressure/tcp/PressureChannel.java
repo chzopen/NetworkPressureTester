@@ -71,37 +71,53 @@ public class PressureChannel
 
 	public void read()
 	{
-		readBuf.clear();
-		channel.read(readBuf, null, new CompletionHandler<Integer, Object>()
+		_read();
+	}
+	
+	private void _read()
+	{
+		try
 		{
-			public void completed(Integer result, Object attachment)
+			readBuf.clear();
+			channel.read(readBuf, null, new CompletionHandler<Integer, Object>()
 			{
-				try
+				public void completed(Integer result, Object attachment)
 				{
-					PressureServer.recvCounter.incrementAndGet();
-					PressureServer.recvBytesCounter.addAndGet(result);
-					
-					if( echo )
+					if( result<0 )
 					{
-						write(readBuf.array(), 0, readBuf.position());
+						logger.error("received {} bytes", result);
+						_closeChannel(channel);
+						echoServer._friendly_onChannelClosed(_this);
+						return ;
 					}
-					
-					readBuf.clear();
-					channel.read(readBuf, null, this);
-				}
-				catch (Exception e)
-				{
-					logger.error("", e);
-				}
-			}
+					else
+					{
 
-			public void failed(Throwable exc, Object attachment)
-			{
-				logger.error("pressure channel read fail: ", exc);
-				_closeChannel(channel);
-				echoServer._friendly_onChannelClosed(_this);
-			};
-		});
+						PressureServer.recvCounter.incrementAndGet();
+						PressureServer.recvBytesCounter.addAndGet(result);
+						
+						if( echo )
+						{
+							write(readBuf.array(), 0, readBuf.position());
+						}
+						
+						readBuf.clear();
+						_read();
+					}
+				}
+
+				public void failed(Throwable exc, Object attachment)
+				{
+					logger.error("pressure channel read fail: ", exc);
+					_closeChannel(channel);
+					echoServer._friendly_onChannelClosed(_this);
+				};
+			});
+		}
+		catch (Exception e)
+		{
+			logger.error("", e);
+		}
 	}
 	
 	public void write(byte[] _data, int _offset, int _length)

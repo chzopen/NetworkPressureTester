@@ -56,6 +56,7 @@ public class PressureClientDelegate
 			client.setSendDataInterval(sendDataInterval);
 			client.setSentDataLength(sentDataLength);
 			client.connect(host, port);
+			Thread.sleep(10);
 		}
 	}
 	
