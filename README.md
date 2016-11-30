@@ -20,8 +20,8 @@ How to run:
 Infomation:
 
 	MainClass: 
-        per.chzopen.network.pressure.PressureServer
-        per.chzopen.network.pressure.PressureClient
+        per.chzopen.network.pressure.tcp.PressureServerDelegate
+        per.chzopen.network.pressure.tcp.PressureClientDelegate
     
 
 
